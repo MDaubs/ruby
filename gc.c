@@ -29,6 +29,10 @@
 #include <sys/types.h>
 #include <assert.h>
 
+#ifdef ENABLE_KSM
+#include <sys/mman.h>
+#endif
+
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
@@ -487,6 +491,12 @@ assign_heap_slot(rb_objspace_t *objspace)
 
     objs = HEAP_OBJ_LIMIT;
     p = (RVALUE*)aligned_malloc(HEAP_ALIGN, HEAP_SIZE);
+
+#ifdef ENABLE_KSM
+    if(!madvise(p, HEAP_ALIGN, MADV_MERGEABLE) && RTEST(ruby_verbose))
+      fprintf(stderr, "Error %i marking %i bytes at %p mergable.", errno, HEAP_ALIGN, p);
+#endif
+
     if (p == 0) {
 	during_gc = 0;
 	rb_memerror();
@@ -3464,6 +3474,10 @@ aligned_free(void *ptr)
     free(ptr);
 #else
     free(((void**)ptr)[-1]);
+#endif
+#ifdef ENABLE_KSM
+    if(!madvise(ptr, HEAP_ALIGN, MADV_UNMERGEABLE) && RTEST(ruby_verbose))
+      fprintf(stderr, "Error %i marking %i bytes at %p unmergable.", errno, HEAP_ALIGN, ptr);
 #endif
 }
 

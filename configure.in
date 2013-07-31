@@ -2654,6 +2654,13 @@ AC_ARG_WITH(soname,
 	AS_HELP_STRING([--with-soname=SONAME], [base name of shared library]),
 	[RUBY_SO_NAME=$withval], [RUBY_SO_NAME='$(RUBY_BASE_NAME)'])
 
+AC_ARG_ENABLE(ksm,
+    AS_HELP_STRING([--enable-ksm], [enable Kernel Samepage Merging (Linux only)]))
+AS_IF([test "x$enable_ksm" = "xyes"], [
+  AC_DEFINE(ENABLE_KSM, 1)
+  AC_CHECK_HEADERS([sys/mman.h])
+])
+
 LIBRUBY_LDSHARED=$LDSHARED
 LIBRUBY_DLDFLAGS=$DLDFLAGS
 LIBRUBY_SO='lib$(RUBY_SO_NAME).so.$(MAJOR).$(MINOR).$(TEENY)'
